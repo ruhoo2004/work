@@ -1,0 +1,105 @@
+#include <iostream>
+#include <string>
+#include <memory>
+
+// to link user input integer to types
+enum TypeEnum
+{
+    PAPER = 1,
+    SCISSOR = 2,
+    ROCK = 3,
+};
+
+// base class
+class Types
+{
+public:
+    virtual ~Types() {}
+    virtual std::string name() const = 0;
+    virtual bool wins(const Types& t) const = 0;
+};
+
+// any new types should be defined here
+// and update related concrete class for winning relationship
+class Paper: public Types
+{
+public:
+    std::string name() const override { return "paper"; }
+
+    bool wins(const Types& t) const override { return t.name() == "rock"; }
+};
+
+class Scissor: public Types
+{
+public:
+    std::string name() const override { return "scissor"; }
+
+    bool wins(const Types& t) const override { return t.name() == "paper"; }
+};
+
+class Rock: public Types
+{
+public:
+    std::string name() const override { return "rock"; }
+
+    bool wins(const Types& t) const override { return t.name() == "scissor"; }
+};
+// add new types here
+class TypeFactory
+{
+public:
+    static std::shared_ptr<Types> create(TypeEnum id) {
+        switch(id)
+        {
+            case PAPER: return std::make_shared<Paper>();
+            case SCISSOR: return std::make_shared<Scissor>();
+            case ROCK: return std::make_shared<Rock>();
+        }
+        return std::shared_ptr<Types>();
+    }
+};
+
+void play(const std::shared_ptr<Types>& player)
+{
+    // random computer play
+    const auto& computer = TypeFactory::create(static_cast<TypeEnum>(rand() % 3 + 1));
+    std::cout << "you " << player->name() << " vs. computer " << computer->name();
+
+    if (computer->name() == player->name())
+    {
+        std::cout << ": tie\n";
+    }
+    else if (player->wins(*computer))
+    {
+        std::cout << ": you win\n";
+    }
+    else
+    {
+        std::cout << ": you lose\n";
+    }
+}
+
+int main()
+{
+    int c;
+    do
+    {
+        std::cout << "Enter your choice: 1->paper, 2->scissor, 3->rock, 0->quit\n";
+        std::cin >> c;
+        if (c == 0)
+        {
+            std::cout << "quit\n";
+            break;
+        }
+        else
+        {
+            auto player = TypeFactory::create(static_cast<TypeEnum>(c));
+            if (player)
+                play(player);
+            else
+                std::cout << "invalid input\n";
+        }
+
+    } while (true);
+
+}
