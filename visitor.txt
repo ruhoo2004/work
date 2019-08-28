@@ -1,0 +1,42 @@
+#include <iostream>
+#include <math.h>
+#include <vector>
+#include <memory>
+#include "visitor.hpp"
+#include "shape.hpp"
+
+class AreaVisitor: public Visitor
+{
+public:
+    virtual void visit(const Circle& c) override
+    {
+        std::cout << "Area of Circle is " << c.getRadius() * c.getRadius() * M_PI << std::endl;
+    }
+
+    virtual void visit(const Rectangle& r) override
+    {
+        std::cout << "Area of Rectangle is " << r.getWidth() * r.getHeight() << std::endl;
+    }
+
+    virtual void visit(const Triangle& r) override
+    {
+        std::cout << "Area of Triangle is " << r.getBase() * r.getHeight() * 0.5 << std::endl;
+    }
+};
+
+int main()
+{
+    std::vector<std::shared_ptr<Shape>> shapes;
+    shapes.emplace_back(new Circle{5});
+    shapes.emplace_back(new Rectangle{3,4});
+    shapes.emplace_back(new Triangle{3,4, 0.35});
+    //below will cause compiler error due to missing in visitor class
+    //which tells the developer to add the additional visitors
+    //shapes.emplace_back(new Test{});
+
+    AreaVisitor v;
+    for (auto& s: shapes)
+    {
+        s->accept(v);
+    }
+}
