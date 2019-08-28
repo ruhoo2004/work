@@ -2,14 +2,6 @@
 #include <string>
 #include <memory>
 
-// to link user input integer to types
-enum TypeEnum
-{
-    PAPER = 1,
-    SCISSOR = 2,
-    ROCK = 3,
-};
-
 // base class
 class Types
 {
@@ -25,7 +17,6 @@ class Paper: public Types
 {
 public:
     std::string name() const override { return "paper"; }
-
     bool wins(const Types& t) const override { return t.name() == "rock"; }
 };
 
@@ -33,7 +24,6 @@ class Scissor: public Types
 {
 public:
     std::string name() const override { return "scissor"; }
-
     bool wins(const Types& t) const override { return t.name() == "paper"; }
 };
 
@@ -41,19 +31,32 @@ class Rock: public Types
 {
 public:
     std::string name() const override { return "rock"; }
-
     bool wins(const Types& t) const override { return t.name() == "scissor"; }
 };
-// add new types here
+
+// create Types based on user input
 class TypeFactory
 {
 public:
-    static std::shared_ptr<Types> create(TypeEnum id) {
-        switch(id)
+    enum TypeEnum
+    {
+        PAPER = 1,
+        SCISSOR = 2,
+        ROCK = 3,
+        INVALID = 4,
+    };
+
+    static std::shared_ptr<Types> create(int c) {
+        if (c > 0 && c < INVALID)
         {
-            case PAPER: return std::make_shared<Paper>();
-            case SCISSOR: return std::make_shared<Scissor>();
-            case ROCK: return std::make_shared<Rock>();
+            TypeEnum id = static_cast<TypeEnum>(c);
+            switch(id)
+            {
+                case PAPER: return std::make_shared<Paper>();
+                case SCISSOR: return std::make_shared<Scissor>();
+                case ROCK: return std::make_shared<Rock>();
+                case INVALID: break; // to avoid warning -Wswitch
+            }
         }
         return std::shared_ptr<Types>();
     }
@@ -62,21 +65,15 @@ public:
 void play(const std::shared_ptr<Types>& player)
 {
     // random computer play
-    const auto& computer = TypeFactory::create(static_cast<TypeEnum>(rand() % 3 + 1));
+    const auto& computer = TypeFactory::create(rand() % 3 + 1);
     std::cout << "you " << player->name() << " vs. computer " << computer->name();
 
     if (computer->name() == player->name())
-    {
         std::cout << ": tie\n";
-    }
     else if (player->wins(*computer))
-    {
         std::cout << ": you win\n";
-    }
     else
-    {
         std::cout << ": you lose\n";
-    }
 }
 
 int main()
@@ -93,13 +90,11 @@ int main()
         }
         else
         {
-            auto player = TypeFactory::create(static_cast<TypeEnum>(c));
+            auto player = TypeFactory::create(c);
             if (player)
                 play(player);
             else
                 std::cout << "invalid input\n";
         }
-
     } while (true);
-
 }
