@@ -1,0 +1,57 @@
+#pragma once
+#include "visitor.hpp"
+
+class Shape
+{
+public:
+    virtual ~Shape() {}
+    virtual void accept(Visitor& visitor) = 0;
+};
+
+template<typename Derived>
+class ShapeImpl: public Shape
+{
+public:
+    virtual void accept(Visitor& visitor) override
+    {
+        visitor.visit(static_cast<Derived&>(*this));
+    }
+};
+
+// add new Shapes below
+class Circle: public ShapeImpl<Circle>
+{
+public:
+    explicit Circle(int radius): m_radius(radius) {}
+    int getRadius() const { return m_radius; }
+private:
+    int m_radius;
+};
+
+class Rectangle: public ShapeImpl<Rectangle>
+{
+public:
+    explicit Rectangle(int h, int w): m_height(h), m_width(w) {}
+    int getHeight() const { return m_height; }
+    int getWidth() const { return m_width; }
+private:
+    int m_height;
+    int m_width;
+};
+
+class Triangle: public ShapeImpl<Triangle>
+{
+public:
+    explicit Triangle(int h, int b, double angle): m_height(h), m_base(b), m_angle(angle) {}
+    int getHeight() const { return m_height; }
+    int getBase() const { return m_base; }
+private:
+    int m_height;
+    int m_base;
+    int m_angle;
+};
+
+// a dummy test shape
+class Test: public ShapeImpl<Test>
+{
+};
