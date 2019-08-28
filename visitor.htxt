@@ -1,0 +1,16 @@
+#pragma once
+
+// to add a new shape, add forward declaration here and update Visitor class
+class Circle;
+class Rectangle;
+class Triangle;
+
+class Visitor
+{
+public:
+    virtual ~Visitor() {}
+
+    virtual void visit(const Circle& c) = 0;
+    virtual void visit(const Rectangle& r) = 0;
+    virtual void visit(const Triangle& r) = 0;
+};
