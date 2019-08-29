@@ -1,0 +1,44 @@
+#include <string>
+
+enum TypeEnum: unsigned short;
+// base class, do not change unless adding more CompareResult,
+// if that happens, the whole Types model should be revisited
+class Types
+{
+public:
+    // all possible results of comparing two types
+    enum CompareResult
+    {
+        TIE = 0,
+        WIN = 1,
+        LOSE = 2,
+        UNKNOWN = 3,
+    };
+
+    virtual ~Types() {}
+    virtual std::string name() const = 0;
+    virtual bool bigger(TypeEnum t) const { return false;}
+
+    CompareResult compare(const Types& t) const
+    {
+        if (id() == t.id()) return TIE;
+        else if (bigger(t.id())) return WIN;
+        else if (t.bigger(id())) return LOSE;
+        else return UNKNOWN;
+    }
+
+private:
+    virtual TypeEnum id() const = 0;
+};
+
+// concrete types should inherit this class
+template<TypeEnum eid>
+class TypesImpl: public Types
+{
+public:
+    TypesImpl(): m_id(eid) {}
+    TypeEnum id() const override { return m_id; }
+protected:
+    TypeEnum m_id;
+};
+~
