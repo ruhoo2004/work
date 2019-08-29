@@ -50,8 +50,3 @@ private:
     int m_base;
     int m_angle;
 };
-
-// a dummy test shape
-class Test: public ShapeImpl<Test>
-{
-};
