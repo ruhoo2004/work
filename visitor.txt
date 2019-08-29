@@ -5,23 +5,53 @@
 #include "visitor.hpp"
 #include "shape.hpp"
 
-class AreaVisitor: public Visitor
+template<typename... Types>
+class AreaVisitor: public VisitorImpl<AreaVisitor<Types...>, Types...>
 {
 public:
-    virtual void visit(const Circle& c) override
+    static void handle(AreaVisitor& v, const Circle& c)
     {
-        std::cout << "Area of Circle is " << c.getRadius() * c.getRadius() * M_PI << std::endl;
+        const auto ret = c.getRadius() * c.getRadius() * M_PI;
+        std::cout << "Area of Circle is " << ret << std::endl;
+        v.sum += ret;
     }
 
-    virtual void visit(const Rectangle& r) override
+    static void handle(AreaVisitor& v, const Rectangle& r)
     {
-        std::cout << "Area of Rectangle is " << r.getWidth() * r.getHeight() << std::endl;
+        const auto ret = r.getWidth() * r.getHeight();
+        std::cout << "Area of Rectangle is " << ret << std::endl;
+        v.sum += ret;
     }
 
-    virtual void visit(const Triangle& r) override
+    static void handle(AreaVisitor& v, const Triangle& r)
     {
-        std::cout << "Area of Triangle is " << r.getBase() * r.getHeight() * 0.5 << std::endl;
+        const auto ret = r.getBase() * r.getHeight() * 0.5;
+        std::cout << "Area of Triangle is " << ret << std::endl;
+        v.sum += ret;
     }
+
+    double sum;
+};
+
+// visitor that only get height of the shape , which do not handle Circle
+template<typename... Types>
+class HeightVisitor: public VisitorImpl<HeightVisitor<Types...>, Types...>
+{
+public:
+    static void handle(HeightVisitor& v, const Rectangle& r)
+    {
+        std::cout << "Height of Rectangle is " << r.getHeight() << std::endl;
+    }
+
+    static void handle(HeightVisitor& v, const Triangle& r)
+    {
+        std::cout << "Height of Triangle is " << r.getHeight() << std::endl;
+    }
+};
+
+// a dummy test shape
+class Test: public ShapeImpl<Test>
+{
 };
 
 int main()
@@ -30,13 +60,40 @@ int main()
     shapes.emplace_back(new Circle{5});
     shapes.emplace_back(new Rectangle{3,4});
     shapes.emplace_back(new Triangle{3,4, 0.35});
-    //below will cause compiler error due to missing in visitor class
+    //below will cause runtime exception due to missing in visitor class
     //which tells the developer to add the additional visitors
     //shapes.emplace_back(new Test{});
 
-    AreaVisitor v;
+    // visitor should know what types it can visit
+    AreaVisitor<Circle, Rectangle, Triangle> v0;
     for (auto& s: shapes)
     {
-        s->accept(v);
+        s->accept(v0);
+    }
+    std::cout << "total sum is " << v0.sum << std::endl;
+
+    // if a new type is added but handle function missed, will be compiler error
+    //AreaVisitor<Circle, Rectangle, Triangle, Test> v1;
+
+    // if shape (Triangle) is missing during visitor construction
+    // it will cause runtime error
+    //AreaVisitor<Circle, Rectangle> v2;
+    //for (auto& s: shapes)
+    //{
+        //s->accept(v2);
+    //}
+
+    //HeightVisitor<Rectangle, Triangle> v3;
+    //for (auto& s: shapes)
+    //{
+        //s->accept(v3);
+    //}
+
+    // only if vistor declaration and shapes matched, it runs without error
+    HeightVisitor<Rectangle, Triangle> v4;
+    std::vector<std::shared_ptr<Shape>> shapes4{shapes[1], shapes[2]};
+    for (auto& s: shapes4)
+    {
+        s->accept(v4);
     }
 }
