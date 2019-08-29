@@ -1,16 +1,48 @@
 #pragma once
 
-// to add a new shape, add forward declaration here and update Visitor class
-class Circle;
-class Rectangle;
-class Triangle;
-
+// base visitor class
 class Visitor
 {
 public:
     virtual ~Visitor() {}
 
-    virtual void visit(const Circle& c) = 0;
-    virtual void visit(const Rectangle& r) = 0;
-    virtual void visit(const Triangle& r) = 0;
+    template<typename T>
+    void visit(const T& c)
+    {
+        do_visit(&c, typeid(T));
+    }
+
+protected:
+    virtual void do_visit(const void* c, const std::type_info& ti) = 0;
+};
+
+// overload visit function for different shapes
+template<typename ConcreteVisitor, typename... Types>
+class VisitorImpl: public Visitor
+{
+private:
+    template<typename T>
+    bool try_visit(const void* c, const std::type_info& ti)
+    {
+        if (ti.hash_code() == typeid(T).hash_code())
+        {
+            concrete_handle(static_cast<const T*>(c));
+            return true;
+        }
+        return false;
+    }
+
+    template<typename T>
+    void concrete_handle(const T* t)
+    {
+        ConcreteVisitor::handle(static_cast<ConcreteVisitor&>(*this), *t);
+    }
+
+    virtual void do_visit(const void* c, const std::type_info& ti) override
+    {
+        if (!(try_visit<Types>(c, ti) || ...))
+        {
+            throw std::invalid_argument(ti.name());
+        }
+    }
 };
