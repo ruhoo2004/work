@@ -1,51 +1,58 @@
 #include <iostream>
-#include <string>
 #include <memory>
-
-// base class
-class Types
-{
-public:
-    virtual ~Types() {}
-    virtual std::string name() const = 0;
-    virtual bool wins(const Types& t) const = 0;
-};
+#include "game.hpp"
 
 // any new types should be defined here
-// and update related concrete class for winning relationship
-class Paper: public Types
+enum TypeEnum: unsigned short
+{
+    PAPER = 1,
+    SCISSOR = 2,
+    ROCK = 3,
+    BIGROCK = 4, // a new dummy type, similar to ROCK but greater than ROCK
+    DUMMY = 5,  // a dummy type, but can not compare with other types
+    INVALID = 6,
+};
+
+// add new types there and update related concrete classes for winning relationship
+class Paper: public TypesImpl<PAPER>
 {
 public:
     std::string name() const override { return "paper"; }
-    bool wins(const Types& t) const override { return t.name() == "rock"; }
+    bool bigger(TypeEnum t) const override { return ROCK == t || BIGROCK == t; }
 };
 
-class Scissor: public Types
+class Scissor: public TypesImpl<SCISSOR>
 {
 public:
     std::string name() const override { return "scissor"; }
-    bool wins(const Types& t) const override { return t.name() == "paper"; }
+    bool bigger(TypeEnum t) const override { return PAPER == t; }
 };
 
-class Rock: public Types
+class Rock: public TypesImpl<ROCK>
 {
 public:
     std::string name() const override { return "rock"; }
-    bool wins(const Types& t) const override { return t.name() == "scissor"; }
+    bool bigger(TypeEnum t) const override { return SCISSOR == t; }
+};
+
+class BigRock: public TypesImpl<BIGROCK>
+{
+public:
+    std::string name() const override { return "big rock"; }
+    bool bigger(TypeEnum t) const override { return SCISSOR == t || ROCK == t; }
+};
+
+// all compare to this one will result UNKNOWN
+class Dummy: public TypesImpl<DUMMY>
+{
+public:
+    std::string name() const override { return "dummy"; }
 };
 
 // create Types based on user input
 class TypeFactory
 {
 public:
-    enum TypeEnum
-    {
-        PAPER = 1,
-        SCISSOR = 2,
-        ROCK = 3,
-        INVALID = 4,
-    };
-
     static std::shared_ptr<Types> create(int c) {
         if (c > 0 && c < INVALID)
         {
@@ -55,6 +62,8 @@ public:
                 case PAPER: return std::make_shared<Paper>();
                 case SCISSOR: return std::make_shared<Scissor>();
                 case ROCK: return std::make_shared<Rock>();
+                case BIGROCK: return std::make_shared<BigRock>();
+                case DUMMY: return std::make_shared<Dummy>();
                 case INVALID: break; // to avoid warning -Wswitch
             }
         }
@@ -68,12 +77,15 @@ void play(const std::shared_ptr<Types>& player)
     const auto& computer = TypeFactory::create(rand() % 3 + 1);
     std::cout << "you " << player->name() << " vs. computer " << computer->name();
 
-    if (computer->name() == player->name())
+    auto ret = player->compare(*computer);
+    if (Types::TIE == ret)
         std::cout << ": tie\n";
-    else if (player->wins(*computer))
+    else if (Types::WIN == ret)
         std::cout << ": you win\n";
-    else
+    else if (Types::LOSE == ret)
         std::cout << ": you lose\n";
+    else
+        std::cout << ": undefined compare\n";
 }
 
 int main()
